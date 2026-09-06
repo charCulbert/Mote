@@ -18,6 +18,8 @@ Available as CLAP, AUv3, and WCLAP. CLAP and WCLAP expose note ports without
 audio ports. AUv3 provides a silent stereo output so the host can drive MIDI
 processing through its audio render cycle.
 
+![Mote running in the browser DAW](screenshot.png)
+
 ## Build
 
 Requires CMake 3.24+, a C++17 compiler, and Ninja or Xcode. Dependencies are
