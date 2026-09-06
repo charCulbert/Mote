@@ -8,7 +8,7 @@ if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
     endif()
 endif()
 
-project(rill VERSION 1.0.0 LANGUAGES C CXX)
+project(mote VERSION 1.0.0 LANGUAGES C CXX)
 
 if(APPLE)
     enable_language(OBJCXX)
@@ -53,30 +53,30 @@ if(NOT TARGET clap-wrapper-extensions)
 endif()
 
 set(PLUGIN_OUTPUT_NAME "Mote")
-set(PLUGIN_ID "com.charlieculbert.rill")
+set(PLUGIN_ID "com.charlieculbert.mote")
 
 include("${CHAR_CLAP_UTILS_ROOT}/cmake/CharClapWebUI.cmake")
-char_clap_stage_web_ui(rill
+char_clap_stage_web_ui(mote
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/ui"
     COMPOST_ROOT "${COMPOST_ROOT}"
     COMPONENTS slider)
 
-add_library(rill-impl STATIC Plugin.cpp)
-target_include_directories(rill-impl PUBLIC
+add_library(mote-impl STATIC Plugin.cpp)
+target_include_directories(mote-impl PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}" "${CHAR_CLAP_UTILS_ROOT}/include")
-target_link_libraries(rill-impl PUBLIC clap clap-helpers clap-wrapper-extensions)
-char_clap_add_native_webview(rill-impl "${CLAP_WRAPPER_CHOC_ROOT}")
-add_custom_target(rill-licenses
+target_link_libraries(mote-impl PUBLIC clap clap-helpers clap-wrapper-extensions)
+char_clap_add_native_webview(mote-impl "${CLAP_WRAPPER_CHOC_ROOT}")
+add_custom_target(mote-licenses
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${rill_RESOURCE_DIRECTORY}/LICENSE"
+        "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${mote_RESOURCE_DIRECTORY}/LICENSE"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md" "${rill_RESOURCE_DIRECTORY}/THIRD_PARTY_NOTICES.md"
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${rill_RESOURCE_DIRECTORY}/THIRD_PARTY_LICENSES"
+        "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md" "${mote_RESOURCE_DIRECTORY}/THIRD_PARTY_NOTICES.md"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${mote_RESOURCE_DIRECTORY}/THIRD_PARTY_LICENSES"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_LICENSES" "${rill_RESOURCE_DIRECTORY}/THIRD_PARTY_LICENSES"
-    DEPENDS rill-resources
+        "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_LICENSES" "${mote_RESOURCE_DIRECTORY}/THIRD_PARTY_LICENSES"
+    DEPENDS mote-resources
     VERBATIM)
-add_dependencies(rill-impl rill-licenses)
+add_dependencies(mote-impl mote-licenses)
 
 if(ANY_WASM_TOOLCHAIN)
     set(formats WCLAP)
@@ -88,11 +88,11 @@ else()
 endif()
 
 make_clapfirst_plugins(
-    TARGET_NAME rill
-    IMPL_TARGET rill-impl
+    TARGET_NAME mote
+    IMPL_TARGET mote-impl
     OUTPUT_NAME "${PLUGIN_OUTPUT_NAME}"
     ENTRY_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Entry.cpp"
-    RESOURCE_DIRECTORY "${rill_RESOURCE_DIRECTORY}"
+    RESOURCE_DIRECTORY "${mote_RESOURCE_DIRECTORY}"
     BUNDLE_IDENTIFIER "${PLUGIN_ID}"
     BUNDLE_VERSION "${PROJECT_VERSION}"
     PLUGIN_FORMATS ${formats}
@@ -104,17 +104,17 @@ make_clapfirst_plugins(
     ASSET_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     COPY_AFTER_BUILD FALSE)
 
-if(TARGET rill_auv3_standalone)
-    add_custom_command(TARGET rill_auv3_standalone POST_BUILD
+if(TARGET mote_auv3_standalone)
+    add_custom_command(TARGET mote_auv3_standalone POST_BUILD
         COMMAND /usr/bin/codesign --force --sign -
-            "$<TARGET_BUNDLE_DIR:rill_auv3_standalone>"
+            "$<TARGET_BUNDLE_DIR:mote_auv3_standalone>"
         VERBATIM)
 endif()
 
-foreach(bundle IN ITEMS rill_clap rill_standalone rill_auv3)
+foreach(bundle IN ITEMS mote_clap mote_standalone mote_auv3)
     if(TARGET ${bundle})
         set_property(TARGET ${bundle} APPEND PROPERTY LINK_DEPENDS
-            "${CMAKE_CURRENT_BINARY_DIR}/rill-resources.stamp")
+            "${CMAKE_CURRENT_BINARY_DIR}/mote-resources.stamp")
     endif()
 endforeach()
 
@@ -122,7 +122,7 @@ endforeach()
 
 include(CTest)
 if(BUILD_TESTING AND NOT ANY_WASM_TOOLCHAIN AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    add_executable(rill-tests tests/RillTests.cpp)
-    target_link_libraries(rill-tests PRIVATE rill-impl)
-    add_test(NAME rill-tests COMMAND rill-tests)
+    add_executable(mote-tests tests/MoteTests.cpp)
+    target_link_libraries(mote-tests PRIVATE mote-impl)
+    add_test(NAME mote-tests COMMAND mote-tests)
 endif()

@@ -29,25 +29,25 @@ try {
   const frame = page.frames().find(f => f.url().includes('/_wclap/resource/'));
   assert(frame, 'Mote resource frame was not created');
   await frame.evaluate(() => {
-    window.rillTest = {messages: [], latest: null};
+    window.moteTest = {messages: [], latest: null};
     addEventListener('message', ({data}) => {
       if (!(data instanceof ArrayBuffer)) return;
       const text = new TextDecoder().decode(data);
       if (!text.startsWith('status:')) return;
       const p = text.split(':');
       const snapshot = {at: performance.now(), clock: +p[1], bpm: +p[2], held: +p[3], tick: +p[4], key: +p[6], emitted: +p[7]};
-      window.rillTest.latest = snapshot;
-      window.rillTest.messages.push(snapshot);
+      window.moteTest.latest = snapshot;
+      window.moteTest.messages.push(snapshot);
     });
   });
   const meters = () => page.locator('daw-session-channel').evaluateAll(els => els.map(e => ({
     name: e.getAttribute('label'), levels: e._levels,
   })));
-  const outputCount = () => frame.evaluate(() => window.rillTest.latest?.emitted ?? 0);
+  const outputCount = () => frame.evaluate(() => window.moteTest.latest?.emitted ?? 0);
   const chord = async () => {
     await page.locator('#host-keyboard').focus();
     for (const key of ['a', 'd', 'g']) await page.keyboard.down(key);
-    await frame.waitForFunction(() => window.rillTest.latest?.held === 3);
+    await frame.waitForFunction(() => window.moteTest.latest?.held === 3);
     for (const key of ['a', 'd', 'g']) await page.keyboard.up(key);
   };
   await ui.getByRole('button', {name: 'Hold notes', exact: true}).click();
@@ -57,17 +57,17 @@ try {
   assert.equal(await ui.locator('#hint').innerText(), 'start transport');
   console.log('INPUT', await ui.locator('#notes').innerText());
   await page.getByRole('button', {name: 'Play', exact: true}).click();
-  await frame.waitForFunction(() => window.rillTest.latest?.emitted >= 6);
+  await frame.waitForFunction(() => window.moteTest.latest?.emitted >= 6);
   await page.waitForFunction(() => [...document.querySelectorAll('daw-session-channel')]
     .some(e => e._levels?.some(n => n > -60)));
-  console.log('OUTPUT', await frame.evaluate(() => window.rillTest.latest), 'METERS', await meters());
+  console.log('OUTPUT', await frame.evaluate(() => window.moteTest.latest), 'METERS', await meters());
   await page.screenshot({path: `${artifacts}/playing.png`});
   await page.locator('iframe[title="Mote interface"]').screenshot({path: `${artifacts}/mote.png`});
 
   await page.getByRole('spinbutton', {name: 'Tempo', exact: true}).press('Enter');
   await page.locator('#bpmBox input').fill('90.5');
   await page.locator('#bpmBox input').press('Enter');
-  await frame.waitForFunction(() => window.rillTest.latest?.bpm === 90.5);
+  await frame.waitForFunction(() => window.moteTest.latest?.bpm === 90.5);
   console.log('TEMPO', await ui.locator('#tempo').innerText());
 
   const observedOrders = {};
@@ -79,14 +79,14 @@ try {
     await ui.getByRole('button', {name, exact: true}).click();
     const before = await outputCount();
     if (name === 'down') {
-      await frame.waitForFunction(before => window.rillTest.latest?.emitted > before
-        && window.rillTest.latest?.key >= 0, before);
+      await frame.waitForFunction(before => window.moteTest.latest?.emitted > before
+        && window.moteTest.latest?.key >= 0, before);
       await ui.locator('.note.active').waitFor();
     }
-    await frame.waitForFunction(before => window.rillTest.latest?.emitted >= before + 6, before);
+    await frame.waitForFunction(before => window.moteTest.latest?.emitted >= before + 6, before);
     const keys = await frame.evaluate(before => {
       const seen = new Set();
-      return window.rillTest.messages.filter(m => m.emitted > before && m.key >= 0
+      return window.moteTest.messages.filter(m => m.emitted > before && m.key >= 0
         && !seen.has(m.emitted) && seen.add(m.emitted)).map(m => m.key).slice(0, 6);
     }, before);
     assert.deepEqual(keys, expected, `${name} output order`);
@@ -98,10 +98,10 @@ try {
   await page.keyboard.press('Home');
   await ui.locator('compost-slider[aria-valuenow="0"]').waitFor();
   const rateStart = await outputCount();
-  await frame.waitForFunction(n => window.rillTest.latest?.emitted >= n + 4, rateStart);
+  await frame.waitForFunction(n => window.moteTest.latest?.emitted >= n + 4, rateStart);
   const intervals = await frame.evaluate(n => {
     const seen = new Set();
-    const onsets = window.rillTest.messages.filter(m => m.emitted > n && m.key >= 0
+    const onsets = window.moteTest.messages.filter(m => m.emitted > n && m.key >= 0
       && !seen.has(m.emitted) && seen.add(m.emitted));
     return onsets.slice(1).map((m, i) => m.at - onsets[i].at);
   }, rateStart);
@@ -113,10 +113,10 @@ try {
   await page.keyboard.press('ArrowRight');
   await ui.locator('compost-slider[parameter-id="5"][aria-valuenow="2"]').waitFor();
   const octaveStart = await outputCount();
-  await frame.waitForFunction(n => window.rillTest.latest?.emitted >= n + 6, octaveStart);
+  await frame.waitForFunction(n => window.moteTest.latest?.emitted >= n + 6, octaveStart);
   const octaveKeys = await frame.evaluate(before => {
     const seen = new Set();
-    return window.rillTest.messages.filter(m => m.emitted > before && m.key >= 0
+    return window.moteTest.messages.filter(m => m.emitted > before && m.key >= 0
       && !seen.has(m.emitted) && seen.add(m.emitted)).map(m => m.key).slice(0, 6);
   }, octaveStart);
   const octaveCycle = [48, 52, 55, 60, 64, 67];
@@ -129,19 +129,19 @@ try {
   await ui.locator('compost-slider[parameter-id="6"][aria-valuenow="5"]').waitFor();
 
   await ui.getByRole('button', {name: 'Hold notes', exact: true}).click();
-  await frame.waitForFunction(() => window.rillTest.latest?.held === 0);
+  await frame.waitForFunction(() => window.moteTest.latest?.held === 0);
   await ui.getByRole('button', {name: 'Hold notes', exact: true}).click();
   await chord();
   const restartCount = await outputCount();
-  await frame.waitForFunction(n => window.rillTest.latest?.emitted > n, restartCount);
+  await frame.waitForFunction(n => window.moteTest.latest?.emitted > n, restartCount);
   await page.getByRole('button', {name: 'Stop', exact: true}).click();
   const stopCount = await outputCount();
   await page.waitForTimeout(600);
-  const hostStopped = await frame.evaluate(() => window.rillTest.latest?.clock !== 2);
+  const hostStopped = await frame.evaluate(() => window.moteTest.latest?.clock !== 2);
   const hostResumedAfterStop = await outputCount() !== stopCount;
-  const stopTrace = await frame.evaluate(() => window.rillTest.messages.slice(-12));
+  const stopTrace = await frame.evaluate(() => window.moteTest.messages.slice(-12));
   await ui.getByRole('button', {name: 'Clear held notes', exact: true}).click();
-  await frame.waitForFunction(() => window.rillTest.latest?.held === 0);
+  await frame.waitForFunction(() => window.moteTest.latest?.held === 0);
   const clearCount = await outputCount();
   await page.waitForTimeout(400);
   assert.equal(await outputCount(), clearCount, 'Clear still generated notes');

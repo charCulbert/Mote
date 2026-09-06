@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace rill
+namespace mote
 {
 // One generated voice, a fixed held-note bank, and a beat-domain gate. No allocation.
 class Engine
@@ -299,4 +299,4 @@ private:
         ++revision;
     }
 };
-} // namespace rill
+} // namespace mote

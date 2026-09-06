@@ -80,8 +80,8 @@ struct Plugin
     const clap_plugin_state_t* state;
     explicit Plugin(const clap_host_t* testHost = &host)
     {
-        const auto* factory = static_cast<const clap_plugin_factory_t*>(rill::entryGetFactory(CLAP_PLUGIN_FACTORY_ID));
-        p = factory->create_plugin(factory, testHost, rill::pluginId);
+        const auto* factory = static_cast<const clap_plugin_factory_t*>(mote::entryGetFactory(CLAP_PLUGIN_FACTORY_ID));
+        p = factory->create_plugin(factory, testHost, mote::pluginId);
         CHECK(p && p->init(p));
         params = static_cast<const clap_plugin_params_t*>(p->get_extension(p, CLAP_EXT_PARAMS));
         state = static_cast<const clap_plugin_state_t*>(p->get_extension(p, CLAP_EXT_STATE));
@@ -114,7 +114,7 @@ struct Plugin
 std::vector<Event> render(uint32_t blockSize)
 {
     Plugin p;
-    p.set(rill::rate, 0);
+    p.set(mote::rate, 0);
     const auto a = note(), b = note(64, true, 0, 11), c = note(67, true, 0, 12);
     std::vector<Event> result;
     for (uint32_t frame = 0; frame < 16000; frame += blockSize)
@@ -148,7 +148,7 @@ void timingAndPhrase()
 }
 void tempoChange()
 {
-    Plugin p; p.preset("up"); p.set(rill::rate, 0);
+    Plugin p; p.preset("up"); p.set(mote::rate, 0);
     auto clock = transport(0); auto n = note(); Output out;
     p.run(250, &clock, out, Input{{ &n.header }});
     clock = transport(.25, true, 120); out.events.clear();
@@ -159,7 +159,7 @@ void tempoChange()
 void fractionalTempo()
 {
     Plugin p;
-    p.set(rill::rate, 0);
+    p.set(mote::rate, 0);
     const auto clock = transport(0, true, 123.456);
     const auto n = note();
     Output out;
@@ -179,18 +179,18 @@ void noteOrder()
     }};
     for (int order = 0; order < 3; ++order)
     {
-        Plugin p; p.set(rill::direction, order);
+        Plugin p; p.set(mote::direction, order);
         const auto a = note(67), b = note(60, true, 0, 11), c = note(64, true, 0, 12);
         auto clock = transport(0); Output out;
         p.run(3000, &clock, out, Input{{ &a.header, &b.header, &c.header }});
         std::vector<int> keys;
         for (auto e : out.events) if (e.type == 0x90) keys.push_back(e.key);
         CHECK(keys == expected[order]);
-        p.set(rill::direction, (order + 1) % 3);
+        p.set(mote::direction, (order + 1) % 3);
         clock = transport(3); out.events.clear(); p.run(1, &clock, out);
         CHECK(out.events.front().key == expected[(order + 1) % 3].front());
     }
-    Plugin single; single.set(rill::direction, 2);
+    Plugin single; single.set(mote::direction, 2);
     const auto on = note(), off = note(60, false, 1100);
     auto clock = transport(0); Output out;
     single.run(2000, &clock, out, Input{{ &on.header, &off.header }});
@@ -201,9 +201,9 @@ void noteOrder()
 void octaveAndGate()
 {
     Plugin p;
-    p.set(rill::rate, 0);
-    p.set(rill::octaves, 2);
-    p.set(rill::gate, 25);
+    p.set(mote::rate, 0);
+    p.set(mote::octaves, 2);
+    p.set(mote::gate, 25);
     const auto a = note(), b = note(64, true, 0, 11);
     const auto clock = transport(0); Output out;
     p.run(4000, &clock, out, Input{{ &a.header, &b.header }});
@@ -218,7 +218,7 @@ void octaveAndGate()
 }
 void latchAndMidi()
 {
-    Plugin p; p.preset("up"); p.set(rill::latch, 1);
+    Plugin p; p.preset("up"); p.set(mote::latch, 1);
     auto on = midi(0x93, 60, 100), off = midi(0x93, 60, 0, 10);
     auto clock = transport(0); Output out;
     p.run(600, &clock, out, Input{{ &on.header, &off.header }});
@@ -227,7 +227,7 @@ void latchAndMidi()
     clock = transport(.6); out.events.clear();
     p.run(600, &clock, out, Input{{ &on.header, &off.header }});
     CHECK(out.events.back().type == 0x90 && out.events.back().key == 67);
-    p.set(rill::latch, 0); clock = transport(1.2); out.events.clear();
+    p.set(mote::latch, 0); clock = transport(1.2); out.events.clear();
     p.run(1100, &clock, out);
     CHECK(out.events.size() == 1 && out.events[0].type == 0x80 && out.events[0].time == 0);
 
@@ -282,13 +282,13 @@ void auv3RenderClock()
 void presetsAndState()
 {
     Plugin p;
-    CHECK(p.params->count(p.p) == rill::parameters.size());
-    for (const auto& preset : rill::presets)
+    CHECK(p.params->count(p.p) == mote::parameters.size());
+    for (const auto& preset : mote::presets)
     {
         p.preset(preset.key);
-        for (uint32_t index = 0; index < rill::parameters.size(); ++index)
+        for (uint32_t index = 0; index < mote::parameters.size(); ++index)
         {
-            const auto id = rill::parameters[index].id;
+            const auto id = mote::parameters[index].id;
             double value = -1, parsed = -1; char text[32]; clap_param_info_t info;
             CHECK(p.params->get_info(p.p, index, &info) && info.id == id);
             CHECK(p.params->get_value(p.p, id, &value) && value == preset.values[id]);
@@ -296,7 +296,7 @@ void presetsAndState()
             CHECK(p.params->text_to_value(p.p, id, text, &parsed) && parsed == value);
         }
     }
-    CHECK(!rill::findParameter(2));
+    CHECK(!mote::findParameter(2));
     std::vector<char> data;
     const clap_ostream_t writer { &data, [](const clap_ostream_t* s, const void* bytes, uint64_t size) -> int64_t {
         auto& data = *static_cast<std::vector<char>*>(s->ctx);
@@ -312,12 +312,12 @@ void presetsAndState()
         std::memcpy(bytes, r.data.data() + r.offset, n); r.offset += n; return n;
     } };
     CHECK(p.state->load(p.p, &reader));
-    double value; CHECK(p.params->get_value(p.p, rill::direction, &value) && value == 2);
+    double value; CHECK(p.params->get_value(p.p, mote::direction, &value) && value == 2);
     read.offset = 0; data[0] = 0; CHECK(!p.state->load(p.p, &reader));
-    CHECK(p.params->get_value(p.p, rill::direction, &value) && value == 2);
+    CHECK(p.params->get_value(p.p, mote::direction, &value) && value == 2);
 
     struct LegacyState {
-        uint32_t magic = 0x52494c4c, version = 1;
+        uint32_t magic = 0x4d4f5445, version = 1;
         std::array<double, 10> values { 0, 16, 0, 7, 3, 4, 5, 50, 0, 1 };
     } legacy;
     data.resize(sizeof(legacy));
@@ -338,9 +338,9 @@ void presetsAndState()
 }
 int main()
 {
-    CHECK(rill::entryInit("."));
-    CHECK(rill::entryGetFactory(CLAP_PRESET_DISCOVERY_FACTORY_ID));
+    CHECK(mote::entryInit("."));
+    CHECK(mote::entryGetFactory(CLAP_PRESET_DISCOVERY_FACTORY_ID));
     timingAndPhrase(); noteOrder(); octaveAndGate(); tempoChange(); fractionalTempo(); latchAndMidi(); transportAndRelease(); auv3RenderClock(); presetsAndState();
-    rill::entryDeinit();
+    mote::entryDeinit();
     std::puts("PASS: three orders, octave range, gate, single note, block invariance, tempo, latch, MIDI, panic, transport, AUv3 render clock, note-off retry, presets, state");
 }

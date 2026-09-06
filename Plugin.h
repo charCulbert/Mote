@@ -5,11 +5,10 @@
 #include <array>
 #include <cmath>
 
-namespace rill
+namespace mote
 {
-inline constexpr char pluginId[] = "com.charlieculbert.rill";
+inline constexpr char pluginId[] = "com.charlieculbert.mote";
 enum Parameter : clap_id { rate = 0, octaves = 5, gate = 6, latch = 8, direction = 9 };
-// Keep the original state slots and parameter IDs; retired controls are ignored.
 inline constexpr size_t stateValueCount = 10;
 struct ParameterInfo { clap_id id; const char* name; double min, max, initial; };
 inline constexpr std::array<ParameterInfo, 5> parameters {{
@@ -35,4 +34,4 @@ const clap_plugin_descriptor_t& descriptor() noexcept;
 bool entryInit(const char* path);
 void entryDeinit();
 const void* entryGetFactory(const char* factoryId);
-} // namespace rill
+} // namespace mote

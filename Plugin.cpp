@@ -15,20 +15,20 @@
 #include <string>
 #include <string_view>
 
-namespace rill
+namespace mote
 {
 namespace
 {
 enum class EditType { begin, value, end };
 struct Edit { EditType type; clap_id id; double value; };
 
-class RillPlugin final : public clap::helpers::Plugin<clap::helpers::MisbehaviourHandler::Terminate,
+class MotePlugin final : public clap::helpers::Plugin<clap::helpers::MisbehaviourHandler::Terminate,
                                                      clap::helpers::CheckingLevel::Minimal>
 {
     using Base = clap::helpers::Plugin<clap::helpers::MisbehaviourHandler::Terminate,
                                       clap::helpers::CheckingLevel::Minimal>;
 public:
-    explicit RillPlugin(const clap_host_t* h)
+    explicit MotePlugin(const clap_host_t* h)
         : Base(&descriptor(), h), host(h),
           auv3Host(h && h->name && std::strstr(h->name, "(CLAP-as-AUv3)")),
           ui(h, [this](std::string_view text) { return receiveUI(text); })
@@ -169,7 +169,7 @@ protected:
     {
         State state;
         if (!stream || !char_clap::readComplete(*stream, &state, sizeof(state))
-            || state.magic != 0x52494c4c || state.version != 1) return false;
+            || state.magic != 0x4d4f5445 || state.version != 1) return false;
         for (auto value : state.values) if (!std::isfinite(value)) return false;
         if (state.values[octaves] < 1) state.values[octaves] = findParameter(octaves)->initial;
         if (state.values[gate] < 5) state.values[gate] = findParameter(gate)->initial;
@@ -279,7 +279,7 @@ protected:
     }
 
 private:
-    struct State { uint32_t magic = 0x52494c4c, version = 1; Values values {}; };
+    struct State { uint32_t magic = 0x4d4f5445, version = 1; Values values {}; };
 
     void setValue(clap_id id, double value) noexcept
     {
@@ -450,7 +450,7 @@ const clap_plugin_t* createPlugin(const clap_plugin_factory_t*, const clap_host_
                                   const char* id)
 {
     if (!host || !id || std::strcmp(id, pluginId) != 0) return nullptr;
-    return (new RillPlugin(host))->clapPlugin();
+    return (new MotePlugin(host))->clapPlugin();
 }
 
 struct PresetProvider
@@ -466,7 +466,7 @@ struct PresetProvider
     static const clap_preset_discovery_provider_descriptor_t& providerDescriptor()
     {
         static const clap_preset_discovery_provider_descriptor_t value {
-            CLAP_VERSION, "com.charlieculbert.rill.presets",
+            CLAP_VERSION, "com.charlieculbert.mote.presets",
             "Mote Presets", "Charlie Culbert"
         };
         return value;
@@ -567,4 +567,4 @@ const void* entryGetFactory(const char* factoryId)
     return nullptr;
 }
 
-} // namespace rill
+} // namespace mote
