@@ -1,0 +1,34 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "xcode",
+      "displayName": "macOS: CLAP + AUv3 (Xcode)",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build-xcode"
+    },
+    {
+      "name": "native",
+      "displayName": "Native CLAP + tests (Ninja, Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-native",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BUILD_TESTING": "ON" }
+    },
+    {
+      "name": "wclap",
+      "displayName": "WCLAP (WASI SDK, needs WASI_SDK_ROOT)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-wclap",
+      "toolchainFile": "$env{WASI_SDK_ROOT}/share/cmake/wasi-sdk-pthread.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BUILD_TESTING": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "xcode", "configurePreset": "xcode", "configuration": "Release" },
+    { "name": "native", "configurePreset": "native" },
+    { "name": "wclap", "configurePreset": "wclap" }
+  ],
+  "testPresets": [
+    { "name": "native", "configurePreset": "native", "output": { "outputOnFailure": true } }
+  ]
+}

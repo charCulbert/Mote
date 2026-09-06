@@ -1,0 +1,18 @@
+[submodule "external/clap"]
+	path = external/clap
+	url = https://github.com/free-audio/clap.git
+[submodule "external/clap-helpers"]
+	path = external/clap-helpers
+	url = https://github.com/free-audio/clap-helpers.git
+[submodule "external/clap-wrapper"]
+	path = external/clap-wrapper
+	url = https://github.com/charCulbert/clap-wrapper.git
+[submodule "external/choc"]
+	path = external/choc
+	url = https://github.com/charCulbert/choc.git
+[submodule "external/char-clap-utils"]
+	path = external/char-clap-utils
+	url = https://github.com/charCulbert/char-clap-utils.git
+[submodule "external/compost"]
+	path = external/compost
+	url = https://github.com/charCulbert/compost.git
